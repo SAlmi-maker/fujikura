@@ -126,7 +126,7 @@
         .stat-green .stat-number { color: #4CAF50; }
         .stat-blue .stat-number { color: #2196F3; }
         .stat-red .stat-number { color: #e94560; }
-        .stat-yellow .stat-number { color: #F9A825; }
+        .stat-yellow .stat-number { color: #888; }
         .stat-gray .stat-number { color: #999; }
 
         .card {
@@ -204,7 +204,7 @@
         .mc-status-working { background: #e8f5e9; color: #2E7D32; }
         .mc-status-maintenance { background: #e3f2fd; color: #1565C0; }
         .mc-status-stopping { background: #fde7e7; color: #c62828; }
-        .mc-status-technician { background: #fff8e1; color: #F57F17; }
+        .mc-status-technician { background: #f0f0f0; color: #666; }
         .mc-status-unknown { background: #f5f5f5; color: #999; }
 
         .mc-dot {
@@ -218,7 +218,7 @@
         .mc-dot-working { background: #4CAF50; }
         .mc-dot-maintenance { background: #2196F3; }
         .mc-dot-stopping { background: #e94560; }
-        .mc-dot-technician { background: #F9A825; }
+        .mc-dot-technician { background: #888; }
         .mc-dot-unknown { background: #ccc; }
 
         .table-container { overflow-x: auto; }
@@ -260,7 +260,7 @@
         .badge-working { background: #e8f5e9; color: #2E7D32; }
         .badge-maintenance { background: #e3f2fd; color: #1565C0; }
         .badge-stopping { background: #fde7e7; color: #c62828; }
-        .badge-technician { background: #fff8e1; color: #F57F17; }
+        .badge-technician { background: #f0f0f0; color: #666; }
         .badge-operational { background: #e8f5e9; color: #2E7D32; }
         .badge-partial { background: #fff8e1; color: #F57F17; }
         .badge-down { background: #fde7e7; color: #c62828; }
@@ -366,6 +366,9 @@
         }
 
         .toast.show { transform: translateX(-50%) translateY(0); }
+
+        .form-row { display: flex; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 140px; }
 
         .two-col {
             display: grid;
@@ -590,6 +593,92 @@
         .trend-up { color: #c62828 !important; }
         .trend-down { color: #2E7D32 !important; }
         .trend-flat { color: #999 !important; }
+
+        .upload-zone {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fafbfc;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #e94560;
+            background: #fff5f7;
+        }
+        .upload-zone svg { margin-bottom: 12px; opacity: 0.5; }
+        .upload-zone h3 { font-size: 1rem; color: #555; margin-bottom: 6px; }
+        .upload-zone p { font-size: 0.82rem; color: #999; }
+        .upload-zone input[type="file"] { display: none; }
+
+        .analytics-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .a-stat {
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px 14px;
+            text-align: center;
+            border: 1.5px solid #eee;
+        }
+        .a-stat .a-num { font-size: 1.5rem; font-weight: 800; color: #1a1a2e; line-height: 1.2; }
+        .a-stat .a-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; margin-top: 4px; }
+        .a-stat.a-red .a-num { color: #e94560; }
+        .a-stat.a-green .a-num { color: #4CAF50; }
+        .a-stat.a-blue .a-num { color: #2196F3; }
+        .a-stat.a-yellow .a-num { color: #F9A825; }
+        .a-stat.a-purple .a-num { color: #7B1FA2; }
+
+        .chart-container {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1.5px solid #eee;
+            margin-bottom: 20px;
+        }
+        .chart-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+        .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+        .bar-row { display: flex; align-items: center; gap: 10px; }
+        .bar-label { width: 140px; font-size: 0.82rem; font-weight: 600; color: #555; text-align: right; flex-shrink: 0; }
+        .bar-track { flex: 1; height: 24px; background: #f5f5f5; border-radius: 6px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 6px; transition: width 0.5s ease; min-width: 2px; }
+        .bar-val { width: 70px; font-size: 0.82rem; font-weight: 700; color: #333; flex-shrink: 0; }
+
+        .file-info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            border-radius: 10px;
+            padding: 14px 20px;
+            border: 1.5px solid #eee;
+            margin-bottom: 20px;
+        }
+        .file-info-bar .fi-name { font-weight: 700; color: #1a1a2e; }
+        .file-info-bar .fi-meta { font-size: 0.82rem; color: #888; }
+        .file-info-bar .fi-clear {
+            padding: 6px 14px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .file-info-bar .fi-clear:hover { background: #fde7e7; border-color: #ef9a9a; color: #c62828; }
     </style>
 </head>
 <body>
@@ -616,6 +705,7 @@
                 <button class="nav-btn" onclick="showPage('reports', this)">Reports</button>
                 <button class="nav-btn" onclick="showPage('machines', this)">Machines</button>
                 <button class="nav-btn" onclick="showPage('machines-auth', this)">Machine Access</button>
+                <button class="nav-btn" onclick="showPage('analytics', this)">Analytics</button>
             </div>
         </div>
     </header>
@@ -756,21 +846,20 @@
                 Machine Access Management
             </div>
             <p style="font-size:0.82rem; color:#888; margin-bottom:16px;">Set a code and PIN for each machine. Operators must enter these to access the site.</p>
-            <div class="form-row" style="margin-bottom:20px; gap:20px; align-items:flex-end;">
-                <div class="form-group" style="min-width:140px;">
+            <div style="margin-bottom:20px; display:flex; flex-direction:column; gap:14px; max-width:360px;">
+                <div>
                     <label style="display:block; margin-bottom:4px; font-size:0.78rem; font-weight:600; color:#555; text-transform:uppercase;">Machine ID</label>
                     <input type="text" id="authMachineId" placeholder="e.g. SZL-015" style="width:100%; padding:9px 12px; border:1.5px solid #ddd; border-radius:8px; font-size:0.9rem; font-family:inherit;">
                 </div>
-                <div class="form-group" style="min-width:140px;">
+                <div>
                     <label style="display:block; margin-bottom:4px; font-size:0.78rem; font-weight:600; color:#555; text-transform:uppercase;">Location</label>
                     <input type="text" id="authLocation" placeholder="e.g. Building A - Line 3" style="width:100%; padding:9px 12px; border:1.5px solid #ddd; border-radius:8px; font-size:0.9rem; font-family:inherit;">
                 </div>
-                <div class="form-group" style="min-width:100px;">
+                <div>
                     <label style="display:block; margin-bottom:4px; font-size:0.78rem; font-weight:600; color:#555; text-transform:uppercase;">PIN</label>
                     <input type="text" id="authPin" placeholder="e.g. 1234" style="width:100%; padding:9px 12px; border:1.5px solid #ddd; border-radius:8px; font-size:0.9rem; font-family:inherit;">
                 </div>
-                <div style="flex-basis:100%; height:0;"></div>
-                <div style="margin-top:16px;">
+                <div>
                     <button onclick="addMachineAuth()" style="padding:9px 20px; background:#1a1a2e; color:#fff; border:none; border-radius:8px; font-size:0.82rem; font-weight:700; cursor:pointer; text-transform:uppercase; letter-spacing:0.3px;">Add</button>
                 </div>
             </div>
@@ -789,6 +878,26 @@
                     <tbody id="authBody"></tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <!-- ANALYTICS PAGE -->
+    <div id="analytics-page" class="page">
+        <div class="card">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Excel Data Analytics
+            </div>
+            <p style="font-size:0.82rem; color:#888; margin-bottom:16px;">Upload an Excel file to analyze downtime, waiting time, maintenance time and other metrics.</p>
+
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('analyticsFileInput').click()">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <h3>Drop your Excel file here or click to browse</h3>
+                <p>Supports .xlsx, .xls, .csv — any structured data</p>
+                <input type="file" id="analyticsFileInput" accept=".xlsx,.xls,.csv" onchange="handleAnalyticsFile(event)">
+            </div>
+
+            <div id="analyticsResults" style="display:none;"></div>
         </div>
     </div>
 
@@ -1596,6 +1705,411 @@
                 .eq('id', id);
             renderAuth();
             showToast('Machine access deleted');
+        }
+
+        /* ==============================================================
+           EXCEL ANALYTICS
+        ============================================================== */
+        var analyticsData = null;
+        var analyticsHeaders = null;
+        var liveMachines = {};
+
+        var uploadZone = document.getElementById('uploadZone');
+        uploadZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', function() {
+            uploadZone.classList.remove('dragover');
+        });
+        uploadZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                processAnalyticsFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleAnalyticsFile(e) {
+            if (e.target.files.length) processAnalyticsFile(e.target.files[0]);
+        }
+
+        function processAnalyticsFile(file) {
+            var reader = new FileReader();
+            reader.onload = async function(e) {
+                var data = new Uint8Array(e.target.result);
+                var workbook = XLSX.read(data, { type: 'array' });
+                var sheetName = workbook.SheetNames[0];
+                var sheet = workbook.Sheets[sheetName];
+                var json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+                if (json.length === 0) {
+                    showToast('File is empty or has no data rows');
+                    return;
+                }
+
+                analyticsHeaders = Object.keys(json[0]);
+                analyticsData = json;
+
+                var machines = await getLatestStatusPerMachine();
+                liveMachines = machines;
+
+                renderMachineAnalytics(file.name, sheetName);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function findCol(headers, candidates) {
+            for (var i = 0; i < candidates.length; i++) {
+                for (var j = 0; j < headers.length; j++) {
+                    if (headers[j].toLowerCase().replace(/[\s_-]/g, '') === candidates[i].toLowerCase().replace(/[\s_-]/g, '')) {
+                        return headers[j];
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getNum(val) {
+            var n = parseFloat(val);
+            return isNaN(n) ? null : n;
+        }
+
+        function calcStats(vals) {
+            vals = vals.filter(function(v) { return v !== null; });
+            if (vals.length === 0) return null;
+            var sorted = vals.slice().sort(function(a, b) { return a - b; });
+            var sum = vals.reduce(function(a, b) { return a + b; }, 0);
+            var avg = sum / vals.length;
+            var min = sorted[0];
+            var max = sorted[sorted.length - 1];
+            var mid = Math.floor(sorted.length / 2);
+            var median = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+            var variance = vals.reduce(function(a, b) { return a + Math.pow(b - avg, 2); }, 0) / vals.length;
+            var stdDev = Math.sqrt(variance);
+            return { count: vals.length, sum: sum, avg: avg, min: min, max: max, range: max - min, median: median, stdDev: stdDev, sorted: sorted };
+        }
+
+        function renderMachineAnalytics(fileName, sheetName) {
+            var results = document.getElementById('analyticsResults');
+            results.style.display = '';
+            document.getElementById('uploadZone').style.display = 'none';
+
+            var machineCol = findCol(analyticsHeaders, ['machine_id', 'machineid', 'machine', 'Machine ID', 'Machine', 'Equipment ID', 'Equipment']);
+            var downtimeCol = findCol(analyticsHeaders, ['downtime', 'total_downtime', 'totaldowntime', 'Downtime', 'Downtime (min)', 'Total Downtime']);
+            var waitingCol = findCol(analyticsHeaders, ['waiting_time', 'waitingtime', 'waiting', 'Waiting Time', 'Waiting Time (min)', 'Wait Time']);
+            var maintCol = findCol(analyticsHeaders, ['maintenance_time', 'maintenancetime', 'maintenance', 'Maintenance Time', 'Maintenance Time (min)', 'Maint Time']);
+            var dateCol = findCol(analyticsHeaders, ['date', 'Date', 'created_at', 'timestamp', 'Time']);
+            var statusCol = findCol(analyticsHeaders, ['post_status', 'poststatus', 'status', 'Status After', 'Post Status']);
+            var techCol = findCol(analyticsHeaders, ['tech_id', 'techid', 'technician', 'Tech ID', 'Technician']);
+            var locationCol = findCol(analyticsHeaders, ['location', 'Location', 'area', 'Area']);
+            var problemCol = findCol(analyticsHeaders, ['problem', 'Problem', 'issue', 'Issue', 'Problem Description']);
+            var partsCol = findCol(analyticsHeaders, ['parts', 'Parts', 'parts_replaced', 'Parts Replaced']);
+
+            var html = '';
+
+            html += '<div class="file-info-bar">' +
+                '<div><span class="fi-name">' + fileName + '</span> &nbsp; <span class="fi-meta">Sheet: ' + sheetName +
+                ' &middot; ' + analyticsData.length + ' rows' +
+                (machineCol ? ' &middot; Machine column: <strong>' + machineCol + '</strong>' : ' &middot; No machine column detected') +
+                (downtimeCol ? ' &middot; Downtime: <strong>' + downtimeCol + '</strong>' : '') +
+                '</div>' +
+                '<button class="fi-clear" onclick="clearAnalytics()">Upload New File</button>' +
+                '</div>';
+
+            var allDowntimes = [];
+            var allWaitings = [];
+            var allMaints = [];
+            var machineGroups = {};
+            var machinesInFile = [];
+
+            if (machineCol) {
+                analyticsData.forEach(function(row) {
+                    var mid = (row[machineCol] || '').toString().trim();
+                    if (!mid) return;
+                    if (!machineGroups[mid]) {
+                        machineGroups[mid] = { rows: [], downtimes: [], waitings: [], maints: [] };
+                        machinesInFile.push(mid);
+                    }
+                    machineGroups[mid].rows.push(row);
+                    if (downtimeCol) {
+                        var d = getNum(row[downtimeCol]);
+                        if (d !== null) { machineGroups[mid].downtimes.push(d); allDowntimes.push(d); }
+                    }
+                    if (waitingCol) {
+                        var w = getNum(row[waitingCol]);
+                        if (w !== null) { machineGroups[mid].waitings.push(w); allWaitings.push(w); }
+                    }
+                    if (maintCol) {
+                        var m = getNum(row[maintCol]);
+                        if (m !== null) { machineGroups[mid].maints.push(m); allMaints.push(m); }
+                    }
+                });
+            } else {
+                analyticsData.forEach(function(row) {
+                    if (downtimeCol) {
+                        var d = getNum(row[downtimeCol]);
+                        if (d !== null) allDowntimes.push(d);
+                    }
+                    if (waitingCol) {
+                        var w = getNum(row[waitingCol]);
+                        if (w !== null) allWaitings.push(w);
+                    }
+                    if (maintCol) {
+                        var m = getNum(row[maintCol]);
+                        if (m !== null) allMaints.push(m);
+                    }
+                });
+            }
+
+            var dtStats = calcStats(allDowntimes);
+            var wtStats = calcStats(allWaitings);
+            var mtStats = calcStats(allMaints);
+
+            var liveIds = Object.keys(liveMachines);
+            var matchedCount = 0;
+            var unmatchedFile = [];
+            machinesInFile.forEach(function(mid) {
+                if (liveMachines[mid]) matchedCount++;
+                else unmatchedFile.push(mid);
+            });
+            var unmatchedLive = liveIds.filter(function(id) { return !machineGroups[id]; });
+
+            html += '<div class="card-title" style="margin:20px 0 12px; font-size:0.9rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Fleet Overview</div>';
+
+            html += '<div class="analytics-stats">';
+            html += '<div class="a-stat a-blue"><div class="a-num">' + machinesInFile.length + '</div><div class="a-label">Machines in File</div></div>';
+            html += '<div class="a-stat a-green"><div class="a-num">' + matchedCount + '</div><div class="a-label">Matched to Live</div></div>';
+            html += '<div class="a-stat"><div class="a-num">' + liveIds.length + '</div><div class="a-label">Live Machines</div></div>';
+            if (unmatchedFile.length > 0) {
+                html += '<div class="a-stat a-yellow"><div class="a-num">' + unmatchedFile.length + '</div><div class="a-label">File-only (no live data)</div></div>';
+            }
+            if (unmatchedLive.length > 0) {
+                html += '<div class="a-stat a-red"><div class="a-num">' + unmatchedLive.length + '</div><div class="a-label">Live-only (not in file)</div></div>';
+            }
+            html += '</div>';
+
+            if (dtStats) {
+                html += '<div class="card-title" style="margin:20px 0 12px; font-size:0.9rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Downtime Analysis (all machines)</div>';
+                html += '<div class="analytics-stats">';
+                html += '<div class="a-stat a-red"><div class="a-num">' + dtStats.avg.toFixed(1) + '</div><div class="a-label">Avg Downtime (min)</div></div>';
+                html += '<div class="a-stat a-yellow"><div class="a-num">' + dtStats.median.toFixed(1) + '</div><div class="a-label">Median Downtime</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + dtStats.min + '</div><div class="a-label">Min Downtime</div></div>';
+                html += '<div class="a-stat a-red"><div class="a-num">' + dtStats.max + '</div><div class="a-label">Max Downtime</div></div>';
+                html += '<div class="a-stat a-purple"><div class="a-num">' + dtStats.range + '</div><div class="a-label">Range</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + dtStats.stdDev.toFixed(1) + '</div><div class="a-label">Std Dev</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + dtStats.sum + '</div><div class="a-label">Total Downtime (min)</div></div>';
+                html += '<div class="a-stat a-blue"><div class="a-num">' + dtStats.count + '</div><div class="a-label">Data Points</div></div>';
+                html += '</div>';
+
+                html += buildDistChart('Downtime Distribution', dtStats, 'min');
+            }
+
+            if (wtStats) {
+                html += '<div class="card-title" style="margin:20px 0 12px; font-size:0.9rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Waiting Time Analysis</div>';
+                html += '<div class="analytics-stats">';
+                html += '<div class="a-stat a-yellow"><div class="a-num">' + wtStats.avg.toFixed(1) + '</div><div class="a-label">Avg Waiting (min)</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + wtStats.median.toFixed(1) + '</div><div class="a-label">Median Waiting</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + wtStats.min + '</div><div class="a-label">Min Waiting</div></div>';
+                html += '<div class="a-stat a-red"><div class="a-num">' + wtStats.max + '</div><div class="a-label">Max Waiting</div></div>';
+                html += '<div class="a-stat a-purple"><div class="a-num">' + wtStats.range + '</div><div class="a-label">Range</div></div>';
+                html += '<div class="a-stat a-blue"><div class="a-num">' + wtStats.count + '</div><div class="a-label">Data Points</div></div>';
+                html += '</div>';
+            }
+
+            if (mtStats) {
+                html += '<div class="card-title" style="margin:20px 0 12px; font-size:0.9rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> Maintenance Time Analysis</div>';
+                html += '<div class="analytics-stats">';
+                html += '<div class="a-stat a-blue"><div class="a-num">' + mtStats.avg.toFixed(1) + '</div><div class="a-label">Avg Maintenance (min)</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + mtStats.median.toFixed(1) + '</div><div class="a-label">Median Maintenance</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + mtStats.min + '</div><div class="a-label">Min Maintenance</div></div>';
+                html += '<div class="a-stat a-red"><div class="a-num">' + mtStats.max + '</div><div class="a-label">Max Maintenance</div></div>';
+                html += '<div class="a-stat a-purple"><div class="a-num">' + mtStats.range + '</div><div class="a-label">Range</div></div>';
+                html += '<div class="a-stat a-blue"><div class="a-num">' + mtStats.count + '</div><div class="a-label">Data Points</div></div>';
+                html += '</div>';
+            }
+
+            if (machineCol && machinesInFile.length > 0) {
+                html += '<div class="card-title" style="margin:20px 0 12px; font-size:0.9rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Per-Machine Breakdown</div>';
+                html += '<div class="table-container"><table class="data-table"><thead><tr>' +
+                    '<th>Machine</th>' +
+                    '<th>Live?</th>' +
+                    '<th>Reports</th>' +
+                    (downtimeCol ? '<th>Avg Downtime</th><th>Total Downtime</th><th>Min</th><th>Max</th>' : '') +
+                    (waitingCol ? '<th>Avg Waiting</th>' : '') +
+                    (maintCol ? '<th>Avg Maintenance</th>' : '') +
+                    (statusCol ? '<th>Post Statuses</th>' : '') +
+                    '</tr></thead><tbody>';
+
+                machinesInFile.sort().forEach(function(mid) {
+                    var g = machineGroups[mid];
+                    var isLive = !!liveMachines[mid];
+                    var liveStatus = isLive ? '<span class="status-badge badge-working">Live</span>' : '<span class="status-badge badge-stopping">Not in system</span>';
+
+                    html += '<tr><td><strong>' + mid + '</strong></td><td>' + liveStatus + '</td><td>' + g.rows.length + '</td>';
+
+                    if (downtimeCol) {
+                        var ds = calcStats(g.downtimes);
+                        if (ds) {
+                            html += '<td>' + ds.avg.toFixed(1) + ' min</td>';
+                            html += '<td>' + ds.sum + ' min</td>';
+                            html += '<td>' + ds.min + '</td>';
+                            html += '<td>' + ds.max + '</td>';
+                        } else {
+                            html += '<td>-</td><td>-</td><td>-</td><td>-</td>';
+                        }
+                    }
+                    if (waitingCol) {
+                        var ws = calcStats(g.waitings);
+                        html += '<td>' + (ws ? ws.avg.toFixed(1) + ' min' : '-') + '</td>';
+                    }
+                    if (maintCol) {
+                        var ms = calcStats(g.maints);
+                        html += '<td>' + (ms ? ms.avg.toFixed(1) + ' min' : '-') + '</td>';
+                    }
+                    if (statusCol) {
+                        var statuses = {};
+                        g.rows.forEach(function(r) {
+                            var s = (r[statusCol] || '').toString().trim();
+                            if (s) statuses[s] = (statuses[s] || 0) + 1;
+                        });
+                        var statusParts = [];
+                        Object.keys(statuses).forEach(function(s) {
+                            statusParts.push(s + ' (' + statuses[s] + ')');
+                        });
+                        html += '<td>' + (statusParts.length > 0 ? statusParts.join(', ') : '-') + '</td>';
+                    }
+
+                    html += '</tr>';
+                });
+                html += '</tbody></table></div>';
+
+                if (downtimeCol && machinesInFile.length > 1) {
+                    html += '<div class="chart-container"><div class="chart-title">Avg Downtime by Machine</div><div class="bar-chart">';
+                    var maxAvgDt = 0;
+                    var machineAvgs = [];
+                    machinesInFile.forEach(function(mid) {
+                        var ds = calcStats(machineGroups[mid].downtimes);
+                        var avg = ds ? ds.avg : 0;
+                        if (avg > maxAvgDt) maxAvgDt = avg;
+                        machineAvgs.push({ mid: mid, avg: avg, isLive: !!liveMachines[mid] });
+                    });
+                    if (maxAvgDt === 0) maxAvgDt = 1;
+                    machineAvgs.sort(function(a, b) { return b.avg - a.avg; });
+                    machineAvgs.forEach(function(m) {
+                        var pct = Math.round((m.avg / maxAvgDt) * 100);
+                        var color = m.isLive ? '#e94560' : '#ccc';
+                        html += '<div class="bar-row">' +
+                            '<span class="bar-label">' + m.mid + (m.isLive ? '' : ' *') + '</span>' +
+                            '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%; background:' + color + ';"></div></div>' +
+                            '<span class="bar-val">' + m.avg.toFixed(1) + ' min</span></div>';
+                    });
+                    html += '</div></div>';
+                }
+            }
+
+            if (dateCol && analyticsData.length > 1) {
+                var monthData = {};
+                analyticsData.forEach(function(row) {
+                    var raw = (row[dateCol] || '').toString().trim();
+                    if (!raw) return;
+                    var month = raw.substring(0, 7);
+                    if (!month || month.length < 7) return;
+                    if (!monthData[month]) monthData[month] = { count: 0, downtimes: [], waitings: [], maints: [] };
+                    monthData[month].count++;
+                    if (downtimeCol) { var d = getNum(row[downtimeCol]); if (d !== null) monthData[month].downtimes.push(d); }
+                    if (waitingCol) { var w = getNum(row[waitingCol]); if (w !== null) monthData[month].waitings.push(w); }
+                    if (maintCol) { var m = getNum(row[maintCol]); if (m !== null) monthData[month].maints.push(m); }
+                });
+
+                var monthKeys = Object.keys(monthData).sort();
+                if (monthKeys.length > 0) {
+                    html += '<div class="card-title" style="margin:20px 0 12px; font-size:0.9rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Trend</div>';
+                    html += '<div class="table-container"><table class="data-table"><thead><tr><th>Month</th><th>Reports</th>';
+                    if (downtimeCol) html += '<th>Avg Downtime</th><th>Total Downtime</th>';
+                    if (waitingCol) html += '<th>Avg Waiting</th>';
+                    if (maintCol) html += '<th>Avg Maintenance</th>';
+                    html += '</tr></thead><tbody>';
+                    monthKeys.forEach(function(m) {
+                        var md = monthData[m];
+                        var mLabel = '';
+                        try { mLabel = new Date(m + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }); } catch(ex) { mLabel = m; }
+                        html += '<tr><td><strong>' + mLabel + '</strong></td><td>' + md.count + '</td>';
+                        if (downtimeCol) {
+                            var ds = calcStats(md.downtimes);
+                            html += '<td>' + (ds ? ds.avg.toFixed(1) + ' min' : '-') + '</td>';
+                            html += '<td>' + (ds ? ds.sum + ' min' : '-') + '</td>';
+                        }
+                        if (waitingCol) {
+                            var ws = calcStats(md.waitings);
+                            html += '<td>' + (ws ? ws.avg.toFixed(1) + ' min' : '-') + '</td>';
+                        }
+                        if (maintCol) {
+                            var ms = calcStats(md.maints);
+                            html += '<td>' + (ms ? ms.avg.toFixed(1) + ' min' : '-') + '</td>';
+                        }
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+                }
+            }
+
+            if (unmatchedLive.length > 0) {
+                html += '<div class="chart-container"><div class="chart-title">Live Machines Not in File</div><div style="display:flex; flex-wrap:wrap; gap:8px;">';
+                unmatchedLive.forEach(function(id) {
+                    html += '<span class="status-badge badge-stopping" style="font-size:0.82rem;">' + id + '</span>';
+                });
+                html += '</div></div>';
+            }
+
+            html += '<div class="chart-container"><div class="chart-title">Data Preview (first 50 rows)</div><div class="table-container"><table class="data-table"><thead><tr>';
+            analyticsHeaders.forEach(function(h) { html += '<th>' + h + '</th>'; });
+            html += '</tr></thead><tbody>';
+            analyticsData.slice(0, 50).forEach(function(row) {
+                html += '<tr>';
+                analyticsHeaders.forEach(function(h) { html += '<td>' + (row[h] !== undefined ? row[h] : '') + '</td>'; });
+                html += '</tr>';
+            });
+            html += '</tbody></table></div></div>';
+
+            results.innerHTML = html;
+        }
+
+        function buildDistChart(title, stats, unit) {
+            var html = '<div class="chart-container"><div class="chart-title">' + title + '</div>';
+            html += '<div class="bar-chart">';
+            var buckets = 8;
+            var step = stats.range / buckets;
+            if (step === 0) step = 1;
+            var counts = new Array(buckets).fill(0);
+            stats.sorted.forEach(function(v) {
+                var idx = Math.min(Math.floor((v - stats.min) / step), buckets - 1);
+                counts[idx]++;
+            });
+            var maxCount = Math.max.apply(null, counts);
+            if (maxCount === 0) maxCount = 1;
+            for (var i = 0; i < buckets; i++) {
+                var lo = (stats.min + i * step).toFixed(1);
+                var hi = (stats.min + (i + 1) * step).toFixed(1);
+                var pct = Math.round((counts[i] / maxCount) * 100);
+                var color = counts[i] > maxCount * 0.7 ? '#e94560' : counts[i] > maxCount * 0.4 ? '#F9A825' : '#2196F3';
+                html += '<div class="bar-row">' +
+                    '<span class="bar-label">' + lo + ' – ' + hi + ' ' + unit + '</span>' +
+                    '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%; background:' + color + ';"></div></div>' +
+                    '<span class="bar-val">' + counts[i] + '</span></div>';
+            }
+            html += '</div></div>';
+            return html;
+        }
+
+        function clearAnalytics() {
+            analyticsData = null;
+            analyticsHeaders = null;
+            liveMachines = {};
+            document.getElementById('analyticsResults').style.display = 'none';
+            document.getElementById('analyticsResults').innerHTML = '';
+            document.getElementById('uploadZone').style.display = '';
+            document.getElementById('analyticsFileInput').value = '';
         }
 
         /* ==============================================================
