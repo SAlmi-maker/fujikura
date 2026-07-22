@@ -1005,6 +1005,7 @@
             document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
             document.getElementById(page + '-page').classList.add('active');
             btn.classList.add('active');
+            localStorage.setItem('currentPage', page);
             refreshAll();
         }
 
@@ -2125,6 +2126,20 @@
         /* ==============================================================
            INIT
         ============================================================== */
+        (function restorePage() {
+            var savedPage = localStorage.getItem('currentPage');
+            if (savedPage) {
+                var pageEl = document.getElementById(savedPage + '-page');
+                var btn = document.querySelector('.nav-btn[onclick*="\'' + savedPage + '\'"]');
+                if (pageEl && btn) {
+                    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+                    document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+                    pageEl.classList.add('active');
+                    btn.classList.add('active');
+                }
+            }
+        })();
+
         refreshAll();
         toggleAutoRefresh();
     </script>
