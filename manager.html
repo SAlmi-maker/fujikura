@@ -1,0 +1,2122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fujikura - Team Leader Dashboard</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #fff;
+            padding: 0 40px;
+            height: 64px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo img { height: 32px; width: auto; }
+
+        .header-right { display: flex; align-items: center; gap: 16px; }
+
+        .sync-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #e8f5e9;
+            color: #2E7D32;
+        }
+
+        .sync-badge .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+        .refresh-time {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .page {
+            display: none;
+            padding: 30px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .page.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-buttons { display: flex; gap: 6px; }
+
+        .nav-btn {
+            padding: 9px 22px;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .nav-btn.active { background: #1a1a2e; color: #fff; }
+        .nav-btn:hover:not(.active) { background: #e8e8e8; }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+
+        .stat-card .stat-number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stat-green .stat-number { color: #4CAF50; }
+        .stat-blue .stat-number { color: #2196F3; }
+        .stat-red .stat-number { color: #e94560; }
+        .stat-yellow .stat-number { color: #888; }
+        .stat-gray .stat-number { color: #999; }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title svg { width: 20px; height: 20px; color: #e94560; }
+
+        .machines-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .machine-card {
+            border: 2px solid #eee;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .machine-card:hover { border-color: #ccc; }
+
+        .machine-card .mc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .machine-card .mc-id {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .machine-card .mc-location {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 12px;
+        }
+
+        .machine-card .mc-status {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .machine-card .mc-time {
+            font-size: 0.75rem;
+            color: #bbb;
+            margin-top: 10px;
+        }
+
+        .mc-status-working { background: #e8f5e9; color: #2E7D32; }
+        .mc-status-maintenance { background: #e3f2fd; color: #1565C0; }
+        .mc-status-stopping { background: #fde7e7; color: #c62828; }
+        .mc-status-technician { background: #f0f0f0; color: #666; }
+        .mc-status-unknown { background: #f5f5f5; color: #999; }
+
+        .mc-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .mc-dot-working { background: #4CAF50; }
+        .mc-dot-maintenance { background: #2196F3; }
+        .mc-dot-stopping { background: #e94560; }
+        .mc-dot-technician { background: #888; }
+        .mc-dot-unknown { background: #ccc; }
+
+        .table-container { overflow-x: auto; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .data-table th {
+            font-weight: 700;
+            color: #999;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table tr:hover td { background: #fafafa; }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-working { background: #e8f5e9; color: #2E7D32; }
+        .badge-maintenance { background: #e3f2fd; color: #1565C0; }
+        .badge-stopping { background: #fde7e7; color: #c62828; }
+        .badge-technician { background: #f0f0f0; color: #666; }
+        .badge-operational { background: #e8f5e9; color: #2E7D32; }
+        .badge-partial { background: #fff8e1; color: #F57F17; }
+        .badge-down { background: #fde7e7; color: #c62828; }
+
+        .alert-item {
+            border-left: 4px solid;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+            background: #fafafa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .alert-item.al-maintenance { border-left-color: #2196F3; }
+        .alert-item.al-stopping { border-left-color: #e94560; }
+        .alert-item.al-technician { border-left-color: #F9A825; }
+
+        .alert-item h4 { font-size: 0.92rem; margin-bottom: 2px; }
+        .alert-item p { font-size: 0.82rem; color: #888; }
+
+        .dismiss-btn {
+            padding: 6px 16px;
+            background: transparent;
+            border: 1.5px solid #ddd;
+            color: #999;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .dismiss-btn:hover { border-color: #e94560; color: #e94560; }
+
+        .empty-msg { text-align: center; color: #bbb; padding: 40px; font-size: 1rem; }
+
+        .export-btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .export-pdf { background: #fde7e7; color: #c62828; }
+        .export-pdf:hover { background: #c62828; color: #fff; }
+
+        .export-excel {
+            background: #e8f5e9;
+            color: #2E7D32;
+            padding: 9px 20px;
+            font-size: 0.82rem;
+        }
+
+        .export-excel:hover { background: #2E7D32; color: #fff; }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-bar input,
+        .filter-bar select {
+            padding: 9px 14px;
+            border: 1.5px solid #ddd;
+            background: #fff;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        .filter-bar input:focus,
+        .filter-bar select:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1a1a2e;
+            color: #fff;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        .form-row { display: flex; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 140px; }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: #888;
+        }
+
+        .auto-refresh input[type="checkbox"] {
+            accent-color: #e94560;
+            width: 16px;
+            height: 16px;
+        }
+
+        @media (max-width: 900px) {
+            header { padding: 0 16px; flex-direction: column; height: auto; padding: 12px 16px; gap: 8px; }
+            .page { padding: 16px; }
+            .two-col { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .modal-lg { width: 95%; max-height: 90vh; }
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal-lg {
+            background: #fff;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            animation: modalIn 0.25s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 24px 28px 0;
+        }
+
+        .modal-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            color: #999;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover { background: #f0f0f0; color: #333; }
+
+        .modal-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            padding: 20px 28px;
+        }
+
+        .modal-stat {
+            text-align: center;
+            padding: 14px 10px;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+
+        .modal-stat .ms-num {
+            font-size: 1.6rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .modal-stat .ms-label {
+            font-size: 0.72rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .ms-green .ms-num { color: #4CAF50; }
+        .ms-blue .ms-num { color: #2196F3; }
+        .ms-red .ms-num { color: #e94560; }
+        .ms-yellow .ms-num { color: #F9A825; }
+        .ms-gray .ms-num { color: #666; }
+
+        .modal-section {
+            padding: 0 28px 20px;
+        }
+
+        .modal-section h3 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .monthly-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .monthly-bar .mb-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            width: 80px;
+            flex-shrink: 0;
+        }
+
+        .monthly-bar .mb-track {
+            flex: 1;
+            height: 24px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .monthly-bar .mb-fill {
+            height: 100%;
+            background: #e94560;
+            border-radius: 6px;
+            transition: width 0.4s ease;
+        }
+
+        .monthly-bar .mb-fill.mb-blue { background: #2196F3; }
+
+        .monthly-bar .mb-value {
+            font-size: 0.82rem;
+            font-weight: 600;
+            width: 60px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .predict-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .predict-card {
+            border-radius: 10px;
+            padding: 16px;
+            border: 1.5px solid #eee;
+        }
+
+        .predict-card .pc-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 6px;
+        }
+
+        .predict-card .pc-value {
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        .predict-card .pc-detail {
+            font-size: 0.78rem;
+            color: #888;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .pc-risk-low { background: #e8f5e9; border-color: #a5d6a7; }
+        .pc-risk-low .pc-label { color: #2E7D32; }
+        .pc-risk-low .pc-value { color: #2E7D32; }
+
+        .pc-risk-medium { background: #fff8e1; border-color: #ffe082; }
+        .pc-risk-medium .pc-label { color: #F57F17; }
+        .pc-risk-medium .pc-value { color: #F57F17; }
+
+        .pc-risk-high { background: #fde7e7; border-color: #ef9a9a; }
+        .pc-risk-high .pc-label { color: #c62828; }
+        .pc-risk-high .pc-value { color: #c62828; }
+
+        .pc-info { background: #f3f4f6; border-color: #ddd; }
+        .pc-info .pc-label { color: #555; }
+        .pc-info .pc-value { color: #1a1a2e; }
+
+        .trend-up { color: #c62828 !important; }
+        .trend-down { color: #2E7D32 !important; }
+        .trend-flat { color: #999 !important; }
+
+        .upload-zone {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fafbfc;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #e94560;
+            background: #fff5f7;
+        }
+        .upload-zone svg { margin-bottom: 12px; opacity: 0.5; }
+        .upload-zone h3 { font-size: 1rem; color: #555; margin-bottom: 6px; }
+        .upload-zone p { font-size: 0.82rem; color: #999; }
+        .upload-zone input[type="file"] { display: none; }
+
+        .analytics-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .a-stat {
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px 14px;
+            text-align: center;
+            border: 1.5px solid #eee;
+        }
+        .a-stat .a-num { font-size: 1.5rem; font-weight: 800; color: #1a1a2e; line-height: 1.2; }
+        .a-stat .a-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; margin-top: 4px; }
+        .a-stat.a-red .a-num { color: #e94560; }
+        .a-stat.a-green .a-num { color: #4CAF50; }
+        .a-stat.a-blue .a-num { color: #2196F3; }
+        .a-stat.a-yellow .a-num { color: #F9A825; }
+        .a-stat.a-purple .a-num { color: #7B1FA2; }
+
+        .chart-container {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1.5px solid #eee;
+            margin-bottom: 20px;
+        }
+        .chart-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+        .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+        .bar-row { display: flex; align-items: center; gap: 10px; }
+        .bar-label { width: 140px; font-size: 0.82rem; font-weight: 600; color: #555; text-align: right; flex-shrink: 0; }
+        .bar-track { flex: 1; height: 24px; background: #f5f5f5; border-radius: 6px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 6px; transition: width 0.5s ease; min-width: 2px; }
+        .bar-val { width: 70px; font-size: 0.82rem; font-weight: 700; color: #333; flex-shrink: 0; }
+
+        .file-info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            border-radius: 10px;
+            padding: 14px 20px;
+            border: 1.5px solid #eee;
+            margin-bottom: 20px;
+        }
+        .file-info-bar .fi-name { font-weight: 700; color: #1a1a2e; }
+        .file-info-bar .fi-meta { font-size: 0.82rem; color: #888; }
+        .file-info-bar .fi-clear {
+            padding: 6px 14px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .file-info-bar .fi-clear:hover { background: #fde7e7; border-color: #ef9a9a; color: #c62828; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <a href="https://www.europe.fujikura.com" target="_blank" rel="noopener" style="display:flex; align-items:center;">
+                <img src="https://www.europe.fujikura.com/wp-content/uploads/2024/04/Fujikura-Logo-Colour.svg" alt="Fujikura">
+            </a>
+            <span class="sync-badge">
+                <span class="dot"></span>
+                Live
+            </span>
+        </div>
+        <div class="header-right">
+            <div class="auto-refresh">
+                <input type="checkbox" id="autoRefresh" checked onchange="toggleAutoRefresh()">
+                <label for="autoRefresh">Auto-refresh (10s)</label>
+            </div>
+            <span class="refresh-time" id="refreshTime"></span>
+            <div class="nav-buttons">
+                <button class="nav-btn active" onclick="showPage('dashboard', this)">Dashboard</button>
+                <button class="nav-btn" onclick="showPage('alerts', this)">Alerts</button>
+                <button class="nav-btn" onclick="showPage('reports', this)">Reports</button>
+                <button class="nav-btn" onclick="showPage('machines', this)">Machines</button>
+                <button class="nav-btn" onclick="showPage('machines-auth', this)">Machine Access</button>
+                <button class="nav-btn" onclick="showPage('analytics', this)">Analytics</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- DASHBOARD PAGE -->
+    <div id="dashboard-page" class="page active">
+        <div class="stats-row" id="statsRow">
+            <div class="stat-card stat-green"><div class="stat-number" id="statWorking">0</div><div class="stat-label">Working</div></div>
+            <div class="stat-card stat-blue"><div class="stat-number" id="statMaint">0</div><div class="stat-label">Needs Maintenance</div></div>
+            <div class="stat-card stat-red"><div class="stat-number" id="statStop">0</div><div class="stat-label">Stopped</div></div>
+            <div class="stat-card stat-yellow"><div class="stat-number" id="statTech">0</div><div class="stat-label">Tech Working</div></div>
+            <div class="stat-card stat-gray"><div class="stat-number" id="statTotal">0</div><div class="stat-label">Total Machines</div></div>
+        </div>
+
+        <div class="two-col">
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    Latest Alerts
+                </div>
+                <div id="dashAlerts"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Recent Activity
+                </div>
+                <div id="dashActivity"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALERTS PAGE -->
+    <div id="alerts-page" class="page">
+        <div class="card">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                All Pending Alerts
+            </div>
+            <div id="allAlerts"></div>
+        </div>
+    </div>
+
+    <!-- REPORTS PAGE -->
+    <div id="reports-page" class="page">
+        <div class="card">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                Maintenance Reports
+            </div>
+            <div class="filter-bar">
+                <input type="text" id="filterMachine" placeholder="Filter by machine..." oninput="renderReports()">
+                <input type="date" id="filterDate" onchange="renderReports()">
+                <select id="filterPostStatus" onchange="renderReports()">
+                    <option value="">All statuses</option>
+                    <option value="Operational">Operational</option>
+                    <option value="Partial">Partial</option>
+                    <option value="Down">Still Down</option>
+                </select>
+            </div>
+            <div class="filter-bar">
+                <label style="font-size:0.82rem; font-weight:600; color:#555; text-transform:uppercase; letter-spacing:0.3px;">Export by Month:</label>
+                <input type="month" id="exportMonth">
+                <button class="export-btn export-excel" onclick="exportExcel()">Export Excel</button>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Tech ID</th>
+                            <th>Machine</th>
+                            <th>Location</th>
+                            <th>Type</th>
+                            <th>Problem</th>
+                            <th>Parts</th>
+                            <th>Waiting (min)</th>
+                            <th>Maintenance (min)</th>
+                            <th>Downtime (min)</th>
+                            <th>Status After</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MACHINES PAGE -->
+    <div id="machines-page" class="page">
+        <div class="card">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                All Machines Status
+            </div>
+            <div class="filter-bar">
+                <select id="filterMachineStatus" onchange="renderMachines()">
+                    <option value="">All Machines</option>
+                    <option value="Working Well">Working Well</option>
+                    <option value="Needs Maintenance">Needs Maintenance</option>
+                    <option value="Stopping">Stopping</option>
+                    <option value="Technician Working">Technician Working</option>
+                </select>
+            </div>
+            <div class="machines-grid" id="machinesGrid"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                All Status History
+            </div>
+            <div class="filter-bar">
+                <input type="text" id="filterHistoryMachine" placeholder="Filter by machine..." oninput="renderFullHistory()">
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Machine</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fullHistoryBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MACHINE ACCESS PAGE -->
+    <div id="machines-auth-page" class="page">
+        <div class="card">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Machine Access Management
+            </div>
+            <p style="font-size:0.82rem; color:#888; margin-bottom:16px;">Set a code and PIN for each machine. Operators must enter these to access the site.</p>
+            <div style="margin-bottom:20px; display:flex; flex-direction:column; gap:14px; max-width:360px;">
+                <div>
+                    <label style="display:block; margin-bottom:4px; font-size:0.78rem; font-weight:600; color:#555; text-transform:uppercase;">Machine ID</label>
+                    <input type="text" id="authMachineId" placeholder="e.g. SZL-015" style="width:100%; padding:9px 12px; border:1.5px solid #ddd; border-radius:8px; font-size:0.9rem; font-family:inherit;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:4px; font-size:0.78rem; font-weight:600; color:#555; text-transform:uppercase;">Location</label>
+                    <input type="text" id="authLocation" placeholder="e.g. Building A - Line 3" style="width:100%; padding:9px 12px; border:1.5px solid #ddd; border-radius:8px; font-size:0.9rem; font-family:inherit;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:4px; font-size:0.78rem; font-weight:600; color:#555; text-transform:uppercase;">PIN</label>
+                    <input type="text" id="authPin" placeholder="e.g. 1234" style="width:100%; padding:9px 12px; border:1.5px solid #ddd; border-radius:8px; font-size:0.9rem; font-family:inherit;">
+                </div>
+                <div>
+                    <button onclick="addMachineAuth()" style="padding:9px 20px; background:#1a1a2e; color:#fff; border:none; border-radius:8px; font-size:0.82rem; font-weight:700; cursor:pointer; text-transform:uppercase; letter-spacing:0.3px;">Add</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Machine ID</th>
+                            <th>Location</th>
+                            <th>PIN</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="authBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ANALYTICS PAGE -->
+    <div id="analytics-page" class="page">
+        <div class="card">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Data Analytics
+            </div>
+            <p style="font-size:0.82rem; color:#888; margin-bottom:16px;">Analytics are calculated from your maintenance reports in Supabase. Optionally upload an Excel file to include additional data.</p>
+
+            <div id="analyticsFileInfo" style="display:none;"></div>
+
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('analyticsFileInput').click()" style="margin-bottom:24px;">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <h3>Drop your Excel file here or click to browse</h3>
+                <p>Supports .xlsx, .xls, .csv — data will be combined with maintenance reports</p>
+                <input type="file" id="analyticsFileInput" accept=".xlsx,.xls,.csv" onchange="handleAnalyticsFile(event)">
+            </div>
+
+            <div id="analyticsResults"></div>
+        </div>
+    </div>
+
+    <!-- MACHINE DETAIL MODAL -->
+    <div class="modal-overlay" id="machineModal" onclick="if(event.target===this)closeMachineModal()">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <div>
+                    <h2 id="modalMachineTitle"></h2>
+                    <p id="modalMachineLocation" style="font-size:0.85rem; color:#888; margin-top:4px;"></p>
+                </div>
+                <button class="modal-close" onclick="closeMachineModal()">&times;</button>
+            </div>
+            <div class="modal-stats" id="modalStats"></div>
+            <div class="modal-section" id="predictSection" style="display:none;">
+                <h3>Predictions & Risk Assessment</h3>
+                <div id="modalPredict"></div>
+            </div>
+            <div class="modal-section">
+                <h3>Downtime by Month</h3>
+                <div id="modalMonthly"></div>
+            </div>
+            <div class="modal-section">
+                <h3>Maintenance Reports</h3>
+                <div class="table-container" id="modalReports"></div>
+            </div>
+            <div class="modal-section">
+                <h3>Status History</h3>
+                <div class="table-container" id="modalHistory"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        /* ==============================================================
+           SUPABASE
+        ============================================================== */
+        var SB_URL = 'https://tnmiqirhcmrletclftjo.supabase.co';
+        var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRubWlxaXJoY21ybGV0Y2xmdGpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MTkyMDIsImV4cCI6MjA5NjQ5NTIwMn0.4yerG6tvGT_8BeoRzCmzeZrae1BlFNpjB6LHpc7gdQA';
+        var supabase = window.supabase.createClient(SB_URL, SB_KEY);
+
+        /* ==============================================================
+           CONFIGURATION
+        ============================================================== */
+        var autoRefreshInterval = null;
+        var REFRESH_MS = 10000;
+
+        /* ==============================================================
+           DATA LAYER - Supabase
+        ============================================================== */
+        async function getAllReports() {
+            var { data } = await supabase
+                .from('reports')
+                .select('*')
+                .order('id', { ascending: false })
+                .limit(500);
+            return data || [];
+        }
+
+        async function getAllAlerts() {
+            var { data } = await supabase
+                .from('alerts')
+                .select('*')
+                .eq('resolved', false)
+                .order('id', { ascending: false });
+            return data || [];
+        }
+
+        async function getAllMaintenanceReports() {
+            var { data } = await supabase
+                .from('maintenance_reports')
+                .select('*')
+                .order('id', { ascending: false })
+                .limit(500);
+            return data || [];
+        }
+
+        async function getLatestStatusPerMachine() {
+            var reports = await getAllReports();
+            var machines = {};
+            reports.forEach(function(r) {
+                if (!machines[r.machine_id] || r.id > machines[r.machine_id].id) {
+                    machines[r.machine_id] = r;
+                }
+            });
+            return machines;
+        }
+
+        async function dismissAlert(machineId, alertId) {
+            await supabase
+                .from('alerts')
+                .update({ resolved: true })
+                .eq('id', alertId);
+            refreshAll();
+            showToast('Alert dismissed');
+        }
+
+        /* ==============================================================
+           NAVIGATION
+        ============================================================== */
+        function showPage(page, btn) {
+            document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+            document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.getElementById(page + '-page').classList.add('active');
+            btn.classList.add('active');
+            localStorage.setItem('currentPage', page);
+            refreshAll();
+        }
+
+        /* ==============================================================
+           RENDERING
+        ============================================================== */
+        async function refreshAll() {
+            await Promise.all([
+                renderStats(),
+                renderDashAlerts(),
+                renderDashActivity(),
+                renderAllAlerts(),
+                renderReports(),
+                renderMachines(),
+                renderFullHistory(),
+                renderAuth(),
+                renderAnalytics()
+            ]);
+            document.getElementById('refreshTime').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+        }
+
+        async function renderStats() {
+            var machines = await getLatestStatusPerMachine();
+            var ids = Object.keys(machines);
+            var working = 0, maint = 0, stopped = 0, tech = 0;
+
+            ids.forEach(function(id) {
+                var s = machines[id].status;
+                if (s === 'Working Well') working++;
+                else if (s === 'Needs Maintenance') maint++;
+                else if (s === 'Stopping') stopped++;
+                else if (s === 'Technician Working') tech++;
+            });
+
+            document.getElementById('statWorking').textContent = working;
+            document.getElementById('statMaint').textContent = maint;
+            document.getElementById('statStop').textContent = stopped;
+            document.getElementById('statTech').textContent = tech;
+            document.getElementById('statTotal').textContent = ids.length;
+        }
+
+        async function renderDashAlerts() {
+            var alerts = (await getAllAlerts()).slice(0, 5);
+            var el = document.getElementById('dashAlerts');
+            el.innerHTML = '';
+
+            if (alerts.length === 0) {
+                el.innerHTML = '<div class="empty-msg">No pending alerts</div>';
+                return;
+            }
+
+            alerts.forEach(function(a) {
+                var cls = a.status === 'Stopping' ? 'al-stopping' : 'al-maintenance';
+                el.innerHTML += '<div class="alert-item ' + cls + '">' +
+                    '<div><h4>' + a.status + ' - ' + a.machine_id + '</h4>' +
+                    '<p>' + (a.location || '') + ' | ' + a.time + '</p></div></div>';
+            });
+        }
+
+        async function renderDashActivity() {
+            var reports = (await getAllReports()).slice(0, 8);
+            var el = document.getElementById('dashActivity');
+            el.innerHTML = '';
+
+            if (reports.length === 0) {
+                el.innerHTML = '<div class="empty-msg">No activity yet</div>';
+                return;
+            }
+
+            reports.forEach(function(r) {
+                var badge = 'badge-working';
+                if (r.status === 'Needs Maintenance') badge = 'badge-maintenance';
+                else if (r.status === 'Stopping') badge = 'badge-stopping';
+                else if (r.status === 'Technician Working') badge = 'badge-technician';
+
+                el.innerHTML += '<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f5f5f5;">' +
+                    '<span style="font-size:0.88rem;"><strong>' + r.machine_id + '</strong></span>' +
+                    '<span class="status-badge ' + badge + '">' + r.status + '</span>' +
+                    '</div>';
+            });
+        }
+
+        async function renderAllAlerts() {
+            var alerts = await getAllAlerts();
+            var el = document.getElementById('allAlerts');
+            el.innerHTML = '';
+
+            if (alerts.length === 0) {
+                el.innerHTML = '<div class="empty-msg">No pending alerts</div>';
+                return;
+            }
+
+            alerts.forEach(function(a) {
+                var cls = a.status === 'Stopping' ? 'al-stopping' : 'al-maintenance';
+                el.innerHTML += '<div class="alert-item ' + cls + '">' +
+                    '<div><h4>' + a.status + ' - Machine ' + a.machine_id + '</h4>' +
+                    '<p>' + (a.location || '') + ' | ' + a.time + '</p></div>' +
+                    '<button class="dismiss-btn" onclick="dismissAlert(\'' + a.machine_id + '\', ' + a.id + ')">Dismiss</button></div>';
+            });
+        }
+
+        async function renderReports() {
+            var reports = await getAllMaintenanceReports();
+            var filterM = document.getElementById('filterMachine').value.toLowerCase();
+            var filterD = document.getElementById('filterDate').value;
+            var filterS = document.getElementById('filterPostStatus').value;
+
+            if (filterM) reports = reports.filter(function(r) { return r.machine_id.toLowerCase().indexOf(filterM) !== -1; });
+            if (filterD) reports = reports.filter(function(r) { return r.date === filterD; });
+            if (filterS) reports = reports.filter(function(r) { return r.post_status === filterS; });
+
+            var tbody = document.getElementById('reportsBody');
+            tbody.innerHTML = '';
+
+            if (reports.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" class="empty-msg">No maintenance reports found</td></tr>';
+                return;
+            }
+
+            reports.forEach(function(r) {
+                var postBadge = 'badge-' + r.post_status.toLowerCase().replace(/\s/g, '');
+                if (r.post_status === 'Partial') postBadge = 'badge-partial';
+                if (r.post_status === 'Down') postBadge = 'badge-down';
+                if (r.post_status === 'Operational') postBadge = 'badge-operational';
+
+                tbody.innerHTML += '<tr>' +
+                    '<td>' + r.date + '</td>' +
+                    '<td>' + r.tech_id + '</td>' +
+                    '<td>' + r.machine_id + '</td>' +
+                    '<td>' + (r.location || '-') + '</td>' +
+                    '<td>' + r.type + '</td>' +
+                    '<td>' + (r.problem || '-') + '</td>' +
+                    '<td>' + (r.parts || '-') + '</td>' +
+                    '<td>' + (r.waiting_time != null ? r.waiting_time : '-') + '</td>' +
+                    '<td>' + (r.maintenance_time != null ? r.maintenance_time : '-') + '</td>' +
+                    '<td>' + (r.downtime != null ? r.downtime : '-') + '</td>' +
+                    '<td><span class="status-badge ' + postBadge + '">' + r.post_status + '</span></td>' +
+                    '<td><button class="export-btn export-pdf" onclick="exportPDF(this)" data-report=\'' + JSON.stringify({date:r.date,techId:r.tech_id,machineId:r.machine_id,location:r.location,type:r.type,problem:r.problem,actions:r.actions,parts:r.parts,waitingTime:r.waiting_time,maintenanceTime:r.maintenance_time,downtime:r.downtime,postStatus:r.post_status,notes:r.notes,checklist:r.checklist}) + '\'>PDF</button></td>' +
+                    '</tr>';
+            });
+        }
+
+        async function renderMachines() {
+            var machines = await getLatestStatusPerMachine();
+            var ids = Object.keys(machines);
+            var filterVal = document.getElementById('filterMachineStatus').value;
+            var grid = document.getElementById('machinesGrid');
+            grid.innerHTML = '';
+
+            if (ids.length === 0) {
+                grid.innerHTML = '<div class="empty-msg">No machines reporting yet</div>';
+                return;
+            }
+
+            var filtered = ids.filter(function(id) {
+                if (!filterVal) return true;
+                return machines[id].status === filterVal;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="empty-msg">No machines match this filter</div>';
+                return;
+            }
+
+            filtered.sort().forEach(function(id) {
+                var r = machines[id];
+                var statusClass = 'unknown';
+                var dotClass = 'mc-dot-unknown';
+
+                if (r.status === 'Working Well') { statusClass = 'working'; dotClass = 'mc-dot-working'; }
+                else if (r.status === 'Needs Maintenance') { statusClass = 'maintenance'; dotClass = 'mc-dot-maintenance'; }
+                else if (r.status === 'Stopping') { statusClass = 'stopping'; dotClass = 'mc-dot-stopping'; }
+                else if (r.status === 'Technician Working') { statusClass = 'technician'; dotClass = 'mc-dot-technician'; }
+
+                grid.innerHTML += '<div class="machine-card" onclick="openMachineModal(\'' + r.machine_id + '\')">' +
+                    '<div class="mc-header"><span class="mc-id">' + r.machine_id + '</span>' +
+                    '<span class="mc-dot ' + dotClass + '"></span></div>' +
+                    '<div class="mc-location">' + (r.location || 'Unknown location') + '</div>' +
+                    '<span class="mc-status mc-status-' + statusClass + '">' + r.status + '</span>' +
+                    '<div class="mc-time">' + r.time + '</div></div>';
+            });
+        }
+
+        async function renderFullHistory() {
+            var reports = await getAllReports();
+            var filterM = document.getElementById('filterHistoryMachine').value.toLowerCase();
+
+            if (filterM) reports = reports.filter(function(r) { return r.machine_id.toLowerCase().indexOf(filterM) !== -1; });
+
+            var tbody = document.getElementById('fullHistoryBody');
+            tbody.innerHTML = '';
+
+            if (reports.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-msg">No history yet</td></tr>';
+                return;
+            }
+
+            reports.slice(0, 100).forEach(function(r) {
+                var badge = 'badge-working';
+                if (r.status === 'Needs Maintenance') badge = 'badge-maintenance';
+                else if (r.status === 'Stopping') badge = 'badge-stopping';
+                else if (r.status === 'Technician Working') badge = 'badge-technician';
+
+                tbody.innerHTML += '<tr>' +
+                    '<td>' + r.time + '</td>' +
+                    '<td>' + r.machine_id + '</td>' +
+                    '<td>' + (r.location || '-') + '</td>' +
+                    '<td><span class="status-badge ' + badge + '">' + r.status + '</span></td>' +
+                    '</tr>';
+            });
+        }
+
+        /* ==============================================================
+           MACHINE DETAIL MODAL
+        ============================================================== */
+        function openMachineModal(machineId) {
+            document.getElementById('machineModal').classList.add('open');
+            loadMachineDetail(machineId);
+        }
+
+        function closeMachineModal() {
+            document.getElementById('machineModal').classList.remove('open');
+        }
+
+        async function loadMachineDetail(machineId) {
+            document.getElementById('modalMachineTitle').textContent = machineId;
+            document.getElementById('modalMachineLocation').textContent = 'Loading...';
+            document.getElementById('modalStats').innerHTML = '';
+            document.getElementById('modalMonthly').innerHTML = '';
+            document.getElementById('modalReports').innerHTML = '';
+            document.getElementById('modalHistory').innerHTML = '';
+
+            var { data: reports } = await supabase
+                .from('reports')
+                .select('*')
+                .eq('machine_id', machineId)
+                .order('id', { ascending: false });
+
+            var { data: mreports } = await supabase
+                .from('maintenance_reports')
+                .select('*')
+                .eq('machine_id', machineId)
+                .order('id', { ascending: false });
+
+            reports = reports || [];
+            mreports = mreports || [];
+
+            if (reports.length > 0) {
+                document.getElementById('modalMachineLocation').textContent = reports[0].location || 'Unknown';
+            }
+
+            var working = 0, maint = 0, stopped = 0, tech = 0;
+            reports.forEach(function(r) {
+                if (r.status === 'Working Well') working++;
+                else if (r.status === 'Needs Maintenance') maint++;
+                else if (r.status === 'Stopping') stopped++;
+                else if (r.status === 'Technician Working') tech++;
+            });
+
+            var totalDowntime = 0, totalWaiting = 0, totalMaintTime = 0;
+            mreports.forEach(function(r) {
+                totalDowntime += r.downtime || 0;
+                totalWaiting += r.waiting_time || 0;
+                totalMaintTime += r.maintenance_time || 0;
+            });
+
+            document.getElementById('modalStats').innerHTML =
+                '<div class="modal-stat ms-green"><div class="ms-num">' + working + '</div><div class="ms-label">Working</div></div>' +
+                '<div class="modal-stat ms-blue"><div class="ms-num">' + maint + '</div><div class="ms-label">Needs Maintenance</div></div>' +
+                '<div class="modal-stat ms-red"><div class="ms-num">' + stopped + '</div><div class="ms-label">Stopped</div></div>' +
+                '<div class="modal-stat ms-yellow"><div class="ms-num">' + tech + '</div><div class="ms-label">Tech Working</div></div>' +
+                '<div class="modal-stat ms-gray"><div class="ms-num">' + reports.length + '</div><div class="ms-label">Total Reports</div></div>' +
+                '<div class="modal-stat ms-red"><div class="ms-num">' + totalDowntime + 'm</div><div class="ms-label">Total Downtime</div></div>' +
+                '<div class="modal-stat ms-yellow"><div class="ms-num">' + totalWaiting + 'm</div><div class="ms-label">Total Waiting</div></div>' +
+                '<div class="modal-stat ms-blue"><div class="ms-num">' + totalMaintTime + 'm</div><div class="ms-label">Total Maintenance</div></div>';
+
+            /* ---- PREDICTIONS ---- */
+            var predictHtml = '';
+            var issueEvents = reports.filter(function(r) {
+                return r.status === 'Needs Maintenance' || r.status === 'Stopping';
+            }).sort(function(a, b) { return a.id - b.id; });
+
+            if (issueEvents.length >= 2) {
+                var intervals = [];
+                for (var i = 1; i < issueEvents.length; i++) {
+                    var diff = new Date(issueEvents[i].iso_time).getTime() - new Date(issueEvents[i - 1].iso_time).getTime();
+                    intervals.push(diff);
+                }
+                var avgInterval = intervals.reduce(function(a, b) { return a + b; }, 0) / intervals.length;
+                var avgDays = Math.round(avgInterval / 86400000);
+                var avgHours = Math.round(avgInterval / 3600000);
+
+                var lastIssue = new Date(issueEvents[issueEvents.length - 1].iso_time);
+                var nowMs = new Date().getTime();
+                var sinceLast = nowMs - lastIssue.getTime();
+                var sinceDays = Math.round(sinceLast / 86400000);
+                var sinceHours = Math.round(sinceLast / 3600000);
+
+                var ratio = avgInterval > 0 ? sinceLast / avgInterval : 0;
+                var daysUntil = Math.max(0, Math.round((avgInterval - sinceLast) / 86400000));
+
+                var riskLevel = 'low';
+                var riskLabel = 'LOW';
+                var riskDetail = 'Machine is within normal operating window.';
+                if (ratio >= 0.9) {
+                    riskLevel = 'high';
+                    riskLabel = 'HIGH';
+                    riskDetail = 'Machine is past expected failure window. Maintenance may be needed soon.';
+                } else if (ratio >= 0.7) {
+                    riskLevel = 'medium';
+                    riskLabel = 'MEDIUM';
+                    riskDetail = 'Machine approaching expected issue window. Monitor closely.';
+                }
+
+                var lastStatus = reports[0].status;
+                if (lastStatus === 'Needs Maintenance' || lastStatus === 'Stopping') {
+                    riskLevel = 'high';
+                    riskLabel = 'HIGH';
+                    riskDetail = 'Machine is currently in an issue state.';
+                    daysUntil = 0;
+                }
+
+                var avgDowntime = Math.round(totalDowntime / mreports.length);
+                var avgWait = mreports.length > 0 ? Math.round(totalWaiting / mreports.length) : 0;
+
+                var nextDate = new Date(lastIssue.getTime() + avgInterval);
+                var nextDateStr = nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                predictHtml =
+                    '<div class="predict-grid">' +
+                    '<div class="predict-card pc-risk-' + riskLevel + '">' +
+                    '<div class="pc-label">Risk Level</div>' +
+                    '<div class="pc-value">' + riskLabel + '</div>' +
+                    '<div class="pc-detail">' + riskDetail + '</div>' +
+                    '</div>' +
+                    '<div class="predict-card pc-info">' +
+                    '<div class="pc-label">Predicted Next Issue</div>' +
+                    '<div class="pc-value">' + nextDateStr + '</div>' +
+                    '<div class="pc-detail">Based on avg interval of ' + (avgDays > 0 ? avgDays + ' days' : avgHours + ' hours') + ' between issues</div>' +
+                    '</div>' +
+                    '<div class="predict-card pc-info">' +
+                    '<div class="pc-label">Time Since Last Issue</div>' +
+                    '<div class="pc-value">' + (sinceDays > 0 ? sinceDays + ' days' : sinceHours + ' hours') + '</div>' +
+                    '<div class="pc-detail">' + Math.round(ratio * 100) + '% of avg interval elapsed' + (daysUntil > 0 ? ' | ~' + daysUntil + ' days remaining' : ' | Overdue') + '</div>' +
+                    '</div>' +
+                    '<div class="predict-card pc-info">' +
+                    '<div class="pc-label">Avg Downtime Per Event</div>' +
+                    '<div class="pc-value">' + avgDowntime + ' min</div>' +
+                    '<div class="pc-detail">Avg waiting: ' + avgWait + ' min | ' + mreports.length + ' reports total</div>' +
+                    '</div>' +
+                    '</div>';
+
+                if (intervals.length >= 2) {
+                    var recentIntervals = intervals.slice(-3);
+                    var olderIntervals = intervals.slice(0, -3);
+                    var recentAvg = recentIntervals.reduce(function(a, b) { return a + b; }, 0) / recentIntervals.length;
+                    var trendText = '';
+                    if (olderIntervals.length > 0) {
+                        var olderAvg = olderIntervals.reduce(function(a, b) { return a + b; }, 0) / olderIntervals.length;
+                        var trendPct = Math.round(((recentAvg - olderAvg) / olderAvg) * 100);
+                        if (trendPct < -10) {
+                            trendText = '<span class="trend-down">Improving (' + trendPct + '% shorter intervals)</span>';
+                        } else if (trendPct > 10) {
+                            trendText = '<span class="trend-up">Deteriorating (' + '+' + trendPct + '% longer intervals)</span>';
+                        } else {
+                            trendText = '<span class="trend-flat">Stable</span>';
+                        }
+                    }
+                    predictHtml += '<div style="margin-top:12px; font-size:0.82rem; color:#555;">Trend: ' + (trendText || 'Not enough data') + '</div>';
+                }
+
+                document.getElementById('predictSection').style.display = '';
+                document.getElementById('modalPredict').innerHTML = predictHtml;
+            } else if (issueEvents.length === 1) {
+                var lastIssue = new Date(issueEvents[0].iso_time);
+                var sinceDays = Math.round((new Date().getTime() - lastIssue.getTime()) / 86400000);
+                var sinceHours = Math.round((new Date().getTime() - lastIssue.getTime()) / 3600000);
+                var avgDowntime = mreports.length > 0 ? Math.round(totalDowntime / mreports.length) : 0;
+
+                predictHtml =
+                    '<div class="predict-grid">' +
+                    '<div class="predict-card pc-info">' +
+                    '<div class="pc-label">Risk Level</div>' +
+                    '<div class="pc-value">INSUFFICIENT DATA</div>' +
+                    '<div class="pc-detail">Only 1 issue recorded. Need more data to generate predictions.</div>' +
+                    '</div>' +
+                    '<div class="predict-card pc-info">' +
+                    '<div class="pc-label">Last Issue</div>' +
+                    '<div class="pc-value">' + sinceDays + ' days ago</div>' +
+                    '<div class="pc-detail">' + sinceHours + ' hours since last problem</div>' +
+                    '</div>' +
+                    '<div class="predict-card pc-info">' +
+                    '<div class="pc-label">Avg Downtime Per Event</div>' +
+                    '<div class="pc-value">' + avgDowntime + ' min</div>' +
+                    '<div class="pc-detail">' + mreports.length + ' maintenance reports filed</div>' +
+                    '</div>' +
+                    '</div>';
+
+                document.getElementById('predictSection').style.display = '';
+                document.getElementById('modalPredict').innerHTML = predictHtml;
+            } else {
+                document.getElementById('predictSection').style.display = 'none';
+            }
+
+            var monthly = {};
+            mreports.forEach(function(r) {
+                if (r.date) {
+                    var month = r.date.substring(0, 7);
+                    if (!monthly[month]) monthly[month] = { downtime: 0, reports: 0, waiting: 0, maintenance: 0 };
+                    monthly[month].downtime += r.downtime || 0;
+                    monthly[month].waiting += r.waiting_time || 0;
+                    monthly[month].maintenance += r.maintenance_time || 0;
+                    monthly[month].reports++;
+                }
+            });
+
+            var monthKeys = Object.keys(monthly).sort().reverse();
+            if (monthKeys.length === 0) {
+                document.getElementById('modalMonthly').innerHTML = '<div class="empty-msg">No maintenance data yet</div>';
+            } else {
+                var maxDown = Math.max.apply(null, monthKeys.map(function(k) { return monthly[k].downtime; }));
+                if (maxDown === 0) maxDown = 1;
+                var html = '';
+                monthKeys.forEach(function(m) {
+                    var pct = Math.round((monthly[m].downtime / maxDown) * 100);
+                    var monthLabel = new Date(m + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                    html += '<div class="monthly-bar">' +
+                        '<span class="mb-label">' + monthLabel + '</span>' +
+                        '<div class="mb-track"><div class="mb-fill" style="width:' + pct + '%"></div></div>' +
+                        '<span class="mb-value">' + monthly[m].downtime + ' min</span>' +
+                        '</div>' +
+                        '<div style="font-size:0.72rem; color:#999; margin:-4px 0 8px 92px;">' +
+                        monthly[m].reports + ' reports | ' + monthly[m].waiting + 'm waiting | ' + monthly[m].maintenance + 'm maintenance</div>';
+                });
+                document.getElementById('modalMonthly').innerHTML = html;
+            }
+
+            if (mreports.length === 0) {
+                document.getElementById('modalReports').innerHTML = '<div class="empty-msg">No maintenance reports</div>';
+            } else {
+                var rhtml = '<table class="data-table"><thead><tr>' +
+                    '<th>Date</th><th>Tech</th><th>Problem</th><th>Parts</th><th>Wait</th><th>Maint</th><th>Down</th><th>Status</th>' +
+                    '</tr></thead><tbody>';
+                mreports.slice(0, 20).forEach(function(r) {
+                    var postBadge = 'badge-partial';
+                    if (r.post_status === 'Operational') postBadge = 'badge-operational';
+                    if (r.post_status === 'Down') postBadge = 'badge-down';
+                    rhtml += '<tr>' +
+                        '<td>' + (r.date || '-') + '</td>' +
+                        '<td>' + (r.tech_id || '-') + '</td>' +
+                        '<td>' + (r.problem || '-') + '</td>' +
+                        '<td>' + (r.parts || '-') + '</td>' +
+                        '<td>' + (r.waiting_time != null ? r.waiting_time + 'm' : '-') + '</td>' +
+                        '<td>' + (r.maintenance_time != null ? r.maintenance_time + 'm' : '-') + '</td>' +
+                        '<td>' + (r.downtime != null ? r.downtime + 'm' : '-') + '</td>' +
+                        '<td><span class="status-badge ' + postBadge + '">' + (r.post_status || '-') + '</span></td>' +
+                        '</tr>';
+                });
+                rhtml += '</tbody></table>';
+                document.getElementById('modalReports').innerHTML = rhtml;
+            }
+
+            if (reports.length === 0) {
+                document.getElementById('modalHistory').innerHTML = '<div class="empty-msg">No status history</div>';
+            } else {
+                var hhtml = '<table class="data-table"><thead><tr>' +
+                    '<th>Time</th><th>Status</th>' +
+                    '</tr></thead><tbody>';
+                reports.slice(0, 30).forEach(function(r) {
+                    var badge = 'badge-working';
+                    if (r.status === 'Needs Maintenance') badge = 'badge-maintenance';
+                    else if (r.status === 'Stopping') badge = 'badge-stopping';
+                    else if (r.status === 'Technician Working') badge = 'badge-technician';
+                    hhtml += '<tr>' +
+                        '<td>' + r.time + '</td>' +
+                        '<td><span class="status-badge ' + badge + '">' + r.status + '</span></td>' +
+                        '</tr>';
+                });
+                hhtml += '</tbody></table>';
+                document.getElementById('modalHistory').innerHTML = hhtml;
+            }
+        }
+
+        /* ==============================================================
+           AUTO REFRESH
+        ============================================================== */
+        function toggleAutoRefresh() {
+            if (document.getElementById('autoRefresh').checked) {
+                autoRefreshInterval = setInterval(refreshAll, REFRESH_MS);
+            } else {
+                clearInterval(autoRefreshInterval);
+            }
+        }
+
+        /* ==============================================================
+           EXPORT PDF - Single Report
+        ============================================================== */
+        function exportPDF(btn) {
+            var data = JSON.parse(btn.getAttribute('data-report'));
+            var w = window.open('', '_blank');
+            var checkHtml = '';
+            if (data.checklist && data.checklist.length) {
+                checkHtml = '<h3>Checklist</h3><table border="1" cellpadding="6" cellspacing="0" style="width:100%; border-collapse:collapse; margin-bottom:16px; font-size:13px;">' +
+                    '<tr style="background:#f5f5f5;"><th style="text-align:left;">Item</th><th style="text-align:left;">Done</th></tr>';
+                data.checklist.forEach(function(c) {
+                    checkHtml += '<tr><td>' + c.item + '</td><td>' + (c.done ? 'Yes' : 'No') + '</td></tr>';
+                });
+                checkHtml += '</table>';
+            }
+
+            w.document.write(
+                '<!DOCTYPE html><html><head><title>Report - ' + data.machineId + '</title>' +
+                '<style>body{font-family:Segoe UI,sans-serif;padding:40px;color:#1a1a2e;}' +
+                'h1{font-size:22px;margin-bottom:4px;}h2{font-size:16px;color:#e94560;margin:0 0 20px 0;border-bottom:2px solid #e94560;padding-bottom:8px;}' +
+                'h3{font-size:14px;margin:16px 0 8px 0;color:#555;}' +
+                'table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px;}' +
+                'td,th{padding:8px 10px;border:1px solid #ddd;text-align:left;vertical-align:top;}' +
+                'th{background:#f5f5f5;font-weight:600;width:160px;}' +
+                '.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;}' +
+                '.b-op{background:#e8f5e9;color:#2E7D32;}.b-pa{background:#fff8e1;color:#F57F17;}.b-dn{background:#fde7e7;color:#c62828;}' +
+                '@media print{body{padding:20px;}}</style></head><body>' +
+                '<h1>Fujikura - Maintenance Report</h1>' +
+                '<h2>Maintenance Declaration Sheet</h2>' +
+                '<table>' +
+                '<tr><th>Machine ID</th><td>' + data.machineId + '</td></tr>' +
+                '<tr><th>Location</th><td>' + (data.location || '-') + '</td></tr>' +
+                '<tr><th>Technician ID</th><td>' + data.techId + '</td></tr>' +
+                '<tr><th>Date</th><td>' + data.date + '</td></tr>' +
+                '<tr><th>Maintenance Type</th><td>' + data.type + '</td></tr>' +
+                '<tr><th>Problem Description</th><td>' + (data.problem || '-') + '</td></tr>' +
+                '<tr><th>Actions Taken</th><td>' + (data.actions || '-') + '</td></tr>' +
+                '<tr><th>Parts Replaced</th><td>' + (data.parts || '-') + '</td></tr>' +
+                '<tr><th>Waiting Time</th><td>' + (data.waitingTime != null ? data.waitingTime + ' min' : '-') + '</td></tr>' +
+                '<tr><th>Maintenance Time</th><td>' + (data.maintenanceTime != null ? data.maintenanceTime + ' min' : '-') + '</td></tr>' +
+                '<tr><th>Total Downtime</th><td>' + (data.downtime != null ? data.downtime + ' min' : '-') + '</td></tr>' +
+                '<tr><th>Status After</th><td>' + data.postStatus + '</td></tr>' +
+                '<tr><th>Additional Notes</th><td>' + (data.notes || '-') + '</td></tr>' +
+                '</table>' +
+                checkHtml +
+                '<script>window.onload=function(){window.print();}<\/script>' +
+                '</body></html>'
+            );
+            w.document.close();
+        }
+
+        /* ==============================================================
+           EXPORT EXCEL - Multiple Reports by Month
+        ============================================================== */
+        async function exportExcel() {
+            var monthVal = document.getElementById('exportMonth').value;
+            var reports = await getAllMaintenanceReports();
+
+            if (monthVal) {
+                reports = reports.filter(function(r) {
+                    return r.date && r.date.indexOf(monthVal) === 0;
+                });
+            }
+
+            if (reports.length === 0) {
+                showToast('No reports found for this period');
+                return;
+            }
+
+            var rows = reports.map(function(r) {
+                var checkItems = '';
+                if (r.checklist && r.checklist.length) {
+                    r.checklist.forEach(function(c) {
+                        checkItems += c.item + ': ' + (c.done ? 'Yes' : 'No') + '; ';
+                    });
+                }
+                return {
+                    'Date': r.date || '',
+                    'Technician ID': r.tech_id || '',
+                    'Machine ID': r.machine_id || '',
+                    'Location': r.location || '',
+                    'Type': r.type || '',
+                    'Problem': r.problem || '',
+                    'Actions': r.actions || '',
+                    'Parts Replaced': r.parts || '',
+                    'Waiting Time (min)': r.waiting_time != null ? r.waiting_time : '',
+                    'Maintenance Time (min)': r.maintenance_time != null ? r.maintenance_time : '',
+                    'Downtime (min)': r.downtime != null ? r.downtime : '',
+                    'Status After': r.post_status || '',
+                    'Notes': r.notes || '',
+                    'Checklist': checkItems
+                };
+            });
+
+            var ws = XLSX.utils.json_to_sheet(rows);
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Maintenance Reports');
+
+            var colWidths = Object.keys(rows[0]).map(function(k) {
+                return { wch: Math.max(k.length + 2, 18) };
+            });
+            ws['!cols'] = colWidths;
+
+            var fileName = monthVal ? 'Maintenance_Reports_' + monthVal + '.xlsx' : 'Maintenance_Reports_All.xlsx';
+            XLSX.writeFile(wb, fileName);
+            showToast('Excel exported: ' + rows.length + ' reports');
+        }
+
+        /* ==============================================================
+           MACHINE ACCESS MANAGEMENT
+        ============================================================== */
+        async function renderAuth() {
+            var { data: rows } = await supabase
+                .from('machine_auth')
+                .select('*')
+                .order('id', { ascending: false });
+
+            var tbody = document.getElementById('authBody');
+            tbody.innerHTML = '';
+
+            if (!rows || rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-msg">No machines registered</td></tr>';
+                return;
+            }
+
+            rows.forEach(function(r) {
+                var statusBadge = r.active
+                    ? '<span class="status-badge badge-working">Active</span>'
+                    : '<span class="status-badge badge-stopping">Inactive</span>';
+                var created = r.created_at ? new Date(r.created_at).toLocaleDateString() : '-';
+
+                tbody.innerHTML += '<tr>' +
+                    '<td><strong>' + r.machine_id + '</strong></td>' +
+                    '<td>' + (r.location || '-') + '</td>' +
+                    '<td>' + r.pin + '</td>' +
+                    '<td>' + statusBadge + '</td>' +
+                    '<td>' + created + '</td>' +
+                    '<td>' +
+                    '<button class="dismiss-btn" onclick="editMachinePin(\'' + r.id + '\', \'' + r.machine_id + '\')" style="margin-right:6px; border-color:#2196F3; color:#2196F3;">Change PIN</button>' +
+                    '<button class="dismiss-btn" onclick="toggleAuthActive(' + r.id + ', ' + r.active + ')" style="margin-right:6px;">' + (r.active ? 'Deactivate' : 'Activate') + '</button>' +
+                    '<button class="dismiss-btn" onclick="deleteAuth(' + r.id + ')" style="border-color:#c62828; color:#c62828;">Delete</button>' +
+                    '</td>' +
+                    '</tr>';
+            });
+        }
+
+        async function addMachineAuth() {
+            var machineId = document.getElementById('authMachineId').value.trim();
+            var location = document.getElementById('authLocation').value.trim();
+            var pin = document.getElementById('authPin').value.trim();
+
+            if (!machineId || !pin) {
+                showToast('Machine ID and PIN are required');
+                return;
+            }
+
+            var { error } = await supabase.from('machine_auth').insert({
+                machine_id: machineId,
+                location: location || null,
+                pin: pin
+            });
+
+            if (error) {
+                if (error.code === '23505') {
+                    showToast('This machine ID already exists');
+                } else {
+                    showToast('Error: ' + error.message);
+                }
+                return;
+            }
+
+            document.getElementById('authMachineId').value = '';
+            document.getElementById('authLocation').value = '';
+            document.getElementById('authPin').value = '';
+            renderAuth();
+            showToast('Machine access added');
+        }
+
+        async function editMachinePin(id, machineId) {
+            var newPin = prompt('Enter new PIN for ' + machineId + ':');
+            if (!newPin || !newPin.trim()) return;
+
+            await supabase
+                .from('machine_auth')
+                .update({ pin: newPin.trim() })
+                .eq('id', id);
+            renderAuth();
+            showToast('PIN updated for ' + machineId);
+        }
+
+        async function toggleAuthActive(id, currentActive) {
+            await supabase
+                .from('machine_auth')
+                .update({ active: !currentActive })
+                .eq('id', id);
+            renderAuth();
+            showToast(currentActive ? 'Machine deactivated' : 'Machine activated');
+        }
+
+        async function deleteAuth(id) {
+            if (!confirm('Delete this machine access?')) return;
+            await supabase
+                .from('machine_auth')
+                .delete()
+                .eq('id', id);
+            renderAuth();
+            showToast('Machine access deleted');
+        }
+
+        /* ==============================================================
+           EXCEL ANALYTICS
+        ============================================================== */
+        var excelData = null;
+        var excelHeaders = null;
+        var excelFileName = '';
+
+        var uploadZone = document.getElementById('uploadZone');
+        uploadZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', function() {
+            uploadZone.classList.remove('dragover');
+        });
+        uploadZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                processAnalyticsFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleAnalyticsFile(e) {
+            if (e.target.files.length) processAnalyticsFile(e.target.files[0]);
+        }
+
+        function processAnalyticsFile(file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var data = new Uint8Array(e.target.result);
+                var workbook = XLSX.read(data, { type: 'array' });
+                var sheetName = workbook.SheetNames[0];
+                var sheet = workbook.Sheets[sheetName];
+                var json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+                if (json.length === 0) {
+                    showToast('File is empty or has no data rows');
+                    return;
+                }
+
+                excelHeaders = Object.keys(json[0]);
+                excelData = json;
+                excelFileName = file.name;
+                renderAnalytics();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function removeExcel() {
+            excelData = null;
+            excelHeaders = null;
+            excelFileName = '';
+            document.getElementById('analyticsFileInput').value = '';
+            document.getElementById('analyticsFileInfo').style.display = 'none';
+            renderAnalytics();
+        }
+
+        function findCol(headers, candidates) {
+            for (var i = 0; i < candidates.length; i++) {
+                for (var j = 0; j < headers.length; j++) {
+                    if (headers[j].toLowerCase().replace(/[\s_-]/g, '') === candidates[i].toLowerCase().replace(/[\s_-]/g, '')) {
+                        return headers[j];
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getNum(val) {
+            var n = parseFloat(val);
+            return isNaN(n) ? null : n;
+        }
+
+        function calcStats(vals) {
+            vals = vals.filter(function(v) { return v !== null; });
+            if (vals.length === 0) return null;
+            var sorted = vals.slice().sort(function(a, b) { return a - b; });
+            var sum = vals.reduce(function(a, b) { return a + b; }, 0);
+            var avg = sum / vals.length;
+            var min = sorted[0];
+            var max = sorted[sorted.length - 1];
+            var mid = Math.floor(sorted.length / 2);
+            var median = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+            var variance = vals.reduce(function(a, b) { return a + Math.pow(b - avg, 2); }, 0) / vals.length;
+            var stdDev = Math.sqrt(variance);
+            return { count: vals.length, sum: sum, avg: avg, min: min, max: max, range: max - min, median: median, stdDev: stdDev, sorted: sorted };
+        }
+
+        function buildDistChart(title, stats, unit) {
+            var html = '<div class="chart-container"><div class="chart-title">' + title + '</div>';
+            html += '<div class="bar-chart">';
+            var buckets = 8;
+            var step = stats.range / buckets;
+            if (step === 0) step = 1;
+            var counts = new Array(buckets).fill(0);
+            stats.sorted.forEach(function(v) {
+                var idx = Math.min(Math.floor((v - stats.min) / step), buckets - 1);
+                counts[idx]++;
+            });
+            var maxCount = Math.max.apply(null, counts);
+            if (maxCount === 0) maxCount = 1;
+            for (var i = 0; i < buckets; i++) {
+                var lo = (stats.min + i * step).toFixed(1);
+                var hi = (stats.min + (i + 1) * step).toFixed(1);
+                var pct = Math.round((counts[i] / maxCount) * 100);
+                var color = counts[i] > maxCount * 0.7 ? '#e94560' : counts[i] > maxCount * 0.4 ? '#F9A825' : '#2196F3';
+                html += '<div class="bar-row">' +
+                    '<span class="bar-label">' + lo + ' – ' + hi + ' ' + unit + '</span>' +
+                    '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%; background:' + color + ';"></div></div>' +
+                    '<span class="bar-val">' + counts[i] + '</span></div>';
+            }
+            html += '</div></div>';
+            return html;
+        }
+
+        async function renderAnalytics() {
+            var results = document.getElementById('analyticsResults');
+            var fileInfo = document.getElementById('analyticsFileInfo');
+
+            var sbReports = await getAllMaintenanceReports();
+
+            var combinedRows = [];
+            var sources = {};
+
+            sbReports.forEach(function(r) {
+                var row = {
+                    _source: 'Supabase',
+                    machine_id: r.machine_id || '',
+                    location: r.location || '',
+                    date: r.date || '',
+                    tech_id: r.tech_id || '',
+                    type: r.type || '',
+                    problem: r.problem || '',
+                    actions: r.actions || '',
+                    parts: r.parts || '',
+                    waiting_time: r.waiting_time,
+                    maintenance_time: r.maintenance_time,
+                    downtime: r.downtime,
+                    post_status: r.post_status || '',
+                    notes: r.notes || ''
+                };
+                combinedRows.push(row);
+                sources['Supabase'] = (sources['Supabase'] || 0) + 1;
+            });
+
+            if (excelData && excelData.length > 0) {
+                fileInfo.style.display = '';
+                fileInfo.innerHTML = '<div class="file-info-bar">' +
+                    '<div><span class="fi-name">' + excelFileName + '</span> &nbsp; <span class="fi-meta">' + excelData.length + ' rows from Excel &middot; Combined with ' + sbReports.length + ' rows from Supabase</span></div>' +
+                    '<button class="fi-clear" onclick="removeExcel()">Remove Excel Data</button>' +
+                    '</div>';
+
+                var exMachineCol = findCol(excelHeaders, ['machine_id', 'machineid', 'machine', 'Machine ID', 'Machine', 'Equipment ID', 'Equipment']);
+                var exDowntimeCol = findCol(excelHeaders, ['downtime', 'total_downtime', 'totaldowntime', 'Downtime', 'Downtime (min)', 'Total Downtime']);
+                var exWaitingCol = findCol(excelHeaders, ['waiting_time', 'waitingtime', 'waiting', 'Waiting Time', 'Waiting Time (min)', 'Wait Time']);
+                var exMaintCol = findCol(excelHeaders, ['maintenance_time', 'maintenancetime', 'maintenance', 'Maintenance Time', 'Maintenance Time (min)', 'Maint Time']);
+                var exDateCol = findCol(excelHeaders, ['date', 'Date', 'created_at', 'timestamp', 'Time']);
+                var exStatusCol = findCol(excelHeaders, ['post_status', 'poststatus', 'status', 'Status After', 'Post Status']);
+                var exTechCol = findCol(excelHeaders, ['tech_id', 'techid', 'technician', 'Tech ID', 'Technician']);
+                var exLocationCol = findCol(excelHeaders, ['location', 'Location', 'area', 'Area']);
+
+                excelData.forEach(function(row) {
+                    combinedRows.push({
+                        _source: 'Excel',
+                        machine_id: exMachineCol ? (row[exMachineCol] || '').toString().trim() : '',
+                        location: exLocationCol ? (row[exLocationCol] || '').toString().trim() : '',
+                        date: exDateCol ? (row[exDateCol] || '').toString().trim() : '',
+                        tech_id: exTechCol ? (row[exTechCol] || '').toString().trim() : '',
+                        type: '',
+                        problem: '',
+                        actions: '',
+                        parts: '',
+                        waiting_time: exWaitingCol ? getNum(row[exWaitingCol]) : null,
+                        maintenance_time: exMaintCol ? getNum(row[exMaintCol]) : null,
+                        downtime: exDowntimeCol ? getNum(row[exDowntimeCol]) : null,
+                        post_status: exStatusCol ? (row[exStatusCol] || '').toString().trim() : '',
+                        notes: ''
+                    });
+                    sources['Excel'] = (sources['Excel'] || 0) + 1;
+                });
+            } else {
+                fileInfo.style.display = 'none';
+            }
+
+            if (combinedRows.length === 0) {
+                results.innerHTML = '<div class="empty-msg" style="padding:40px;">No maintenance reports found. Submit reports from the operator site or upload an Excel file.</div>';
+                return;
+            }
+
+            var allDowntimes = [];
+            var allWaitings = [];
+            var allMaints = [];
+            var machineGroups = {};
+            var machinesList = [];
+
+            combinedRows.forEach(function(row) {
+                var mid = row.machine_id;
+                if (mid) {
+                    if (!machineGroups[mid]) {
+                        machineGroups[mid] = { rows: [], downtimes: [], waitings: [], maints: [], sources: {} };
+                        machinesList.push(mid);
+                    }
+                    machineGroups[mid].rows.push(row);
+                    machineGroups[mid].sources[row._source] = (machineGroups[mid].sources[row._source] || 0) + 1;
+                }
+                if (row.downtime != null) { allDowntimes.push(row.downtime); if (mid) machineGroups[mid].downtimes.push(row.downtime); }
+                if (row.waiting_time != null) { allWaitings.push(row.waiting_time); if (mid) machineGroups[mid].waitings.push(row.waiting_time); }
+                if (row.maintenance_time != null) { allMaints.push(row.maintenance_time); if (mid) machineGroups[mid].maints.push(row.maintenance_time); }
+            });
+
+            var dtStats = calcStats(allDowntimes);
+            var wtStats = calcStats(allWaitings);
+            var mtStats = calcStats(allMaints);
+
+            var liveMachines = await getLatestStatusPerMachine();
+            var liveIds = Object.keys(liveMachines);
+
+            var html = '';
+
+            var sourceLabels = [];
+            Object.keys(sources).forEach(function(s) { sourceLabels.push(s + ': ' + sources[s]); });
+            html += '<div class="analytics-stats">';
+            html += '<div class="a-stat a-blue"><div class="a-num">' + combinedRows.length + '</div><div class="a-label">Total Records</div></div>';
+            html += '<div class="a-stat"><div class="a-num">' + machinesList.length + '</div><div class="a-label">Unique Machines</div></div>';
+            html += '<div class="a-stat a-green"><div class="a-num">' + liveIds.length + '</div><div class="a-label">Live Machines</div></div>';
+            html += '<div class="a-stat a-purple"><div class="a-num">' + (dtStats ? dtStats.count : 0) + '</div><div class="a-label">Downtime Records</div></div>';
+            html += '<div class="a-stat a-yellow"><div class="a-num">' + (wtStats ? wtStats.count : 0) + '</div><div class="a-label">Waiting Records</div></div>';
+            html += '<div class="a-stat a-blue"><div class="a-num">' + (mtStats ? mtStats.count : 0) + '</div><div class="a-label">Maintenance Records</div></div>';
+            html += '</div>';
+
+            html += '<div style="margin-bottom:16px; font-size:0.78rem; color:#999;">Data sources: ' + sourceLabels.join(' | ') + '</div>';
+
+            if (dtStats) {
+                html += '<div class="card-title" style="margin:20px 0 12px; font-size:0.9rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Downtime Analysis</div>';
+                html += '<div class="analytics-stats">';
+                html += '<div class="a-stat a-red"><div class="a-num">' + dtStats.avg.toFixed(1) + '</div><div class="a-label">Avg Downtime (min)</div></div>';
+                html += '<div class="a-stat a-yellow"><div class="a-num">' + dtStats.median.toFixed(1) + '</div><div class="a-label">Median Downtime</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + dtStats.min + '</div><div class="a-label">Min</div></div>';
+                html += '<div class="a-stat a-red"><div class="a-num">' + dtStats.max + '</div><div class="a-label">Max</div></div>';
+                html += '<div class="a-stat a-purple"><div class="a-num">' + dtStats.range + '</div><div class="a-label">Range</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + dtStats.stdDev.toFixed(1) + '</div><div class="a-label">Std Dev</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + dtStats.sum + '</div><div class="a-label">Total (min)</div></div>';
+                html += '<div class="a-stat a-blue"><div class="a-num">' + dtStats.count + '</div><div class="a-label">Data Points</div></div>';
+                html += '</div>';
+                html += buildDistChart('Downtime Distribution', dtStats, 'min');
+            }
+
+            if (wtStats) {
+                html += '<div class="card-title" style="margin:20px 0 12px; font-size:0.9rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Waiting Time Analysis</div>';
+                html += '<div class="analytics-stats">';
+                html += '<div class="a-stat a-yellow"><div class="a-num">' + wtStats.avg.toFixed(1) + '</div><div class="a-label">Avg Waiting (min)</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + wtStats.median.toFixed(1) + '</div><div class="a-label">Median</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + wtStats.min + '</div><div class="a-label">Min</div></div>';
+                html += '<div class="a-stat a-red"><div class="a-num">' + wtStats.max + '</div><div class="a-label">Max</div></div>';
+                html += '<div class="a-stat a-purple"><div class="a-num">' + wtStats.range + '</div><div class="a-label">Range</div></div>';
+                html += '<div class="a-stat a-blue"><div class="a-num">' + wtStats.count + '</div><div class="a-label">Data Points</div></div>';
+                html += '</div>';
+            }
+
+            if (mtStats) {
+                html += '<div class="card-title" style="margin:20px 0 12px; font-size:0.9rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> Maintenance Time Analysis</div>';
+                html += '<div class="analytics-stats">';
+                html += '<div class="a-stat a-blue"><div class="a-num">' + mtStats.avg.toFixed(1) + '</div><div class="a-label">Avg Maintenance (min)</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + mtStats.median.toFixed(1) + '</div><div class="a-label">Median</div></div>';
+                html += '<div class="a-stat"><div class="a-num">' + mtStats.min + '</div><div class="a-label">Min</div></div>';
+                html += '<div class="a-stat a-red"><div class="a-num">' + mtStats.max + '</div><div class="a-label">Max</div></div>';
+                html += '<div class="a-stat a-purple"><div class="a-num">' + mtStats.range + '</div><div class="a-label">Range</div></div>';
+                html += '<div class="a-stat a-blue"><div class="a-num">' + mtStats.count + '</div><div class="a-label">Data Points</div></div>';
+                html += '</div>';
+            }
+
+            if (machinesList.length > 0) {
+                html += '<div class="card-title" style="margin:20px 0 12px; font-size:0.9rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Per-Machine Breakdown</div>';
+                html += '<div class="table-container"><table class="data-table"><thead><tr>' +
+                    '<th>Machine</th><th>Live?</th><th>Source</th><th>Reports</th>' +
+                    '<th>Avg Downtime</th><th>Total Downtime</th><th>Min</th><th>Max</th>' +
+                    '<th>Avg Waiting</th><th>Avg Maintenance</th>' +
+                    '</tr></thead><tbody>';
+
+                machinesList.sort().forEach(function(mid) {
+                    var g = machineGroups[mid];
+                    var isLive = !!liveMachines[mid];
+                    var liveStatus = isLive ? '<span class="status-badge badge-working">Live</span>' : '<span class="status-badge badge-stopping">Not in system</span>';
+                    var srcParts = [];
+                    Object.keys(g.sources).forEach(function(s) { srcParts.push(s + ': ' + g.sources[s]); });
+
+                    var ds = calcStats(g.downtimes);
+                    var ws = calcStats(g.waitings);
+                    var ms = calcStats(g.maints);
+
+                    html += '<tr><td><strong>' + mid + '</strong></td><td>' + liveStatus + '</td><td style="font-size:0.78rem;">' + srcParts.join(', ') + '</td><td>' + g.rows.length + '</td>';
+                    html += '<td>' + (ds ? ds.avg.toFixed(1) + ' min' : '-') + '</td>';
+                    html += '<td>' + (ds ? ds.sum + ' min' : '-') + '</td>';
+                    html += '<td>' + (ds ? ds.min : '-') + '</td>';
+                    html += '<td>' + (ds ? ds.max : '-') + '</td>';
+                    html += '<td>' + (ws ? ws.avg.toFixed(1) + ' min' : '-') + '</td>';
+                    html += '<td>' + (ms ? ms.avg.toFixed(1) + ' min' : '-') + '</td>';
+                    html += '</tr>';
+                });
+                html += '</tbody></table></div>';
+
+                if (machinesList.length > 1) {
+                    html += '<div class="chart-container"><div class="chart-title">Avg Downtime by Machine</div><div class="bar-chart">';
+                    var maxAvgDt = 0;
+                    var machineAvgs = [];
+                    machinesList.forEach(function(mid) {
+                        var ds = calcStats(machineGroups[mid].downtimes);
+                        var avg = ds ? ds.avg : 0;
+                        if (avg > maxAvgDt) maxAvgDt = avg;
+                        machineAvgs.push({ mid: mid, avg: avg, isLive: !!liveMachines[mid] });
+                    });
+                    if (maxAvgDt === 0) maxAvgDt = 1;
+                    machineAvgs.sort(function(a, b) { return b.avg - a.avg; });
+                    machineAvgs.forEach(function(m) {
+                        var pct = Math.round((m.avg / maxAvgDt) * 100);
+                        var color = m.isLive ? '#e94560' : '#ccc';
+                        html += '<div class="bar-row">' +
+                            '<span class="bar-label">' + m.mid + '</span>' +
+                            '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%; background:' + color + ';"></div></div>' +
+                            '<span class="bar-val">' + m.avg.toFixed(1) + ' min</span></div>';
+                    });
+                    html += '</div></div>';
+                }
+            }
+
+            var monthData = {};
+            combinedRows.forEach(function(row) {
+                var raw = row.date;
+                if (!raw) return;
+                var month = raw.substring(0, 7);
+                if (!month || month.length < 7) return;
+                if (!monthData[month]) monthData[month] = { count: 0, downtimes: [], waitings: [], maints: [] };
+                monthData[month].count++;
+                if (row.downtime != null) monthData[month].downtimes.push(row.downtime);
+                if (row.waiting_time != null) monthData[month].waitings.push(row.waiting_time);
+                if (row.maintenance_time != null) monthData[month].maints.push(row.maintenance_time);
+            });
+
+            var monthKeys = Object.keys(monthData).sort();
+            if (monthKeys.length > 0) {
+                html += '<div class="card-title" style="margin:20px 0 12px; font-size:0.9rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Trend</div>';
+                html += '<div class="table-container"><table class="data-table"><thead><tr><th>Month</th><th>Reports</th><th>Avg Downtime</th><th>Total Downtime</th><th>Avg Waiting</th><th>Avg Maintenance</th></tr></thead><tbody>';
+                monthKeys.forEach(function(m) {
+                    var md = monthData[m];
+                    var mLabel = '';
+                    try { mLabel = new Date(m + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }); } catch(ex) { mLabel = m; }
+                    var ds = calcStats(md.downtimes);
+                    var ws = calcStats(md.waitings);
+                    var ms = calcStats(md.maints);
+                    html += '<tr><td><strong>' + mLabel + '</strong></td><td>' + md.count + '</td>';
+                    html += '<td>' + (ds ? ds.avg.toFixed(1) + ' min' : '-') + '</td>';
+                    html += '<td>' + (ds ? ds.sum + ' min' : '-') + '</td>';
+                    html += '<td>' + (ws ? ws.avg.toFixed(1) + ' min' : '-') + '</td>';
+                    html += '<td>' + (ms ? ms.avg.toFixed(1) + ' min' : '-') + '</td>';
+                    html += '</tr>';
+                });
+                html += '</tbody></table></div>';
+            }
+
+            results.innerHTML = html;
+        }
+
+        function clearAnalytics() {
+            excelData = null;
+            excelHeaders = null;
+            excelFileName = '';
+            document.getElementById('analyticsFileInput').value = '';
+            document.getElementById('analyticsFileInfo').style.display = 'none';
+            renderAnalytics();
+        }
+
+        /* ==============================================================
+           TOAST
+        ============================================================== */
+        function showToast(msg) {
+            var toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(function() { toast.classList.remove('show'); }, 3000);
+        }
+
+        /* ==============================================================
+           INIT
+        ============================================================== */
+        refreshAll();
+        toggleAutoRefresh();
+
+        (function() {
+            var saved = localStorage.getItem('currentPage');
+            if (saved) {
+                var page = document.getElementById(saved + '-page');
+                if (page) {
+                    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+                    document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+                    page.classList.add('active');
+                    var btns = document.querySelectorAll('.nav-btn');
+                    btns.forEach(function(b) {
+                        if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'" + saved + "'") !== -1) {
+                            b.classList.add('active');
+                        }
+                    });
+                }
+            }
+        })();
+    </script>
+
+</body>
+</html>
